@@ -29,10 +29,12 @@ class Project(models.Model):
             MinValueValidator(1),
             MaxValueValidator(5),
         ])
+    owner = models.ForeignKey('auth.User', related_name='projects', on_delete=models.CASCADE)
     
     class Meta:
         verbose_name = _("Project")
         verbose_name_plural = _("Projects")
+        ordering = ['-id']
 
     def __str__(self):
         return self.name
