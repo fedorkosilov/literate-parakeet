@@ -32,6 +32,7 @@ The purpose of the system is to store interesting Github projects
 
 - All users are able to list github projects. Listing
 of the project entries are paginated so that there is 10 items on a page
+- Query string parameters can be used to sort project entries
 - Authenticated users are able to create, modify and delete project entries
 - Authenticated users are able to configure (list, create, update and delete) webhooks that would get called when a new project entry is added to database by any user. Payload of that webhook is the same as the actual entry in JSON format
 - Users are authenticated with a token in Authorization request header, eg. Authorization: Token foobar
