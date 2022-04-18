@@ -37,3 +37,4 @@ of the project entries are paginated so that there is 10 items on a page
 - Authenticated users are able to configure (list, create, update and delete) webhooks that would get called when a new project entry is added to database by any user. Payload of that webhook is the same as the actual entry in JSON format
 - Users are authenticated with a token in Authorization request header, eg. Authorization: Token foobar
 - Django admin is able to create new users and tokens from Django Admin panel
+- Webhooks are send outside of the request response cycle
