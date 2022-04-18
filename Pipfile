@@ -6,11 +6,15 @@ name = "pypi"
 [packages]
 Django = "*"
 djangorestframework = "*"
-djangorestframework-jsonapi = "*"
 celery = "*"
 redis = "*"
+psycopg2 = "*"
+requests = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
+
+[packages.djangorestframework-jsonapi]
+extras = [ "django-filter",]
