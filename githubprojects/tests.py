@@ -6,7 +6,11 @@ from rest_framework.authtoken.models import Token
 from githubprojects.models import Project
 from decimal import Decimal
 
+
 class ProjectTests(APITestCase):
+    """
+    Project tests
+    """
     def setUp(self):
         user = User.objects.create_user(
             username='testuser', 
@@ -75,6 +79,21 @@ class ProjectTests(APITestCase):
 
         # Test with incomplete URL
         pjct_url = "https://github.com/fedorkosilov"
+        data = {
+                "data": {
+                    "type": "Project",
+                    "id": pjct_id,
+                    "attributes": {
+                        "url": pjct_url,
+                    }
+                }
+            }
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data[0]['detail'], 'URL must be a valid link to a Project on GitHub.')
+
+        # Test with invalid URL
+        pjct_url = "htttps://github.com/fedorkosilov"
         data = {
                 "data": {
                     "type": "Project",
@@ -293,7 +312,7 @@ class ProjectTests(APITestCase):
     def test_authenticated_user_cannot_put_patch_and_delete_project_objects_he_doesnt_own(self):
         """
         Ensure PUT, PATCH and DELETE methods for Project object are not allowed for authenticated user,
-        but not an owner of this object
+        who is not an owner of this object
         """
         user2 = User.objects.create_user(
             username='testuser2', 
