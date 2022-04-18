@@ -19,11 +19,11 @@ When you are set up and running, you should be able to to navigate your browser 
 
 http://localhost:8000/projects/ - A list of github projects
 
-http://localhost:8000/projects/'id'/ - A detail page for particular github project, where 'id' is the 'id' of the project
+http://localhost:8000/projects/'id'/ - A detail endpoint for particular github project, where 'id' is the 'id' of the project
 
-http://localhost:8000/webhooks/ - A list of configured webhooks
+http://localhost:8000/webhooks/ - A list of configured webhooks for current authenticated user
 
-http://localhost:8000/webhooks/'id'/ - A detail page for particular webhook, where 'id' is the 'id' of the webhook
+http://localhost:8000/webhooks/'id'/ - A detail endpoint for particular webhook, where 'id' is the 'id' of the webhook
 
 http://localhost:8000/admin/ - A simple Django Admin interface to navigate and manage Projects, Webhooks, Users and Tokens
 
