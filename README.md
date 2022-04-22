@@ -15,7 +15,7 @@ docker exec -it djangochallenge_web python manage.py createsuperuser
 ```
 
 ## Usage
-When you are set up and running, you should be able to to navigate your browser to the following urls:
+When you are set up and running, you should have access the following urls:
 
 http://localhost:8000/projects/ - A list of github projects
 
