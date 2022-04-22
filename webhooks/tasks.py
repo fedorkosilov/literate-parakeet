@@ -2,31 +2,20 @@ from celery import shared_task
 from django.core.serializers.json import DjangoJSONEncoder
 from webhooks.models import Webhook
 from githubprojects.models import Project
+from typing_extensions import TypeAlias
 import requests
 import json
-import time
 
-
-@shared_task
-def fire_project_create_hooks_delivery(project_pk):
-    """
-    Start Project create hooks delivery outside of the request response cycle
-
-    project_pk: the primary key of the Project object 
-    """
-    for hook in Webhook.objects.all():
-        deliver_project_create_hook.delay(hook.url,project_pk)
-
+ProjectJSONType: TypeAlias = dict[str, dict[str, object]]
 
 @shared_task
-def deliver_project_create_hook(target, project_pk):
+def deliver_project_create_hook(project_id: int) -> None:
     """
     Deliver project create hooks in an asynchronous manner
 
-    target: the url to deliver the payload
-    project_pk: the primary key of the Project object
+    project_id: the id of the Project object
     """
-    project = Project.objects.get(pk=project_pk)
+    project = Project.objects.get(id=project_id)
     # TODO: There should be a better way to construct object payload in JSON:API format
     data = {
         "data": {
@@ -41,10 +30,11 @@ def deliver_project_create_hook(target, project_pk):
             }
         }
     }
-    send_post_request(target,data)
+    for hook in Webhook.objects.all():
+        send_post_request(hook.url,data)
 
 
-def send_post_request(target,data):
+def send_post_request(target: str, data: ProjectJSONType) -> None:
     try:
         response = requests.post(
             url=target,
@@ -53,4 +43,4 @@ def send_post_request(target,data):
         )
     except:
         # TODO: Implement some exception workaround logic  
-        return
+        pass

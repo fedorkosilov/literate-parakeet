@@ -1,15 +1,16 @@
 from django.urls import reverse
 from django.contrib.auth.models import User
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APISimpleTestCase
 from rest_framework.authtoken.models import Token
 from webhooks.models import Webhook
 from githubprojects.models import Project
-from django.test import TransactionTestCase
+from django.test import SimpleTestCase
 from celery.contrib.testing.worker import start_worker
 from djangochallenge.celery import app
 from decimal import Decimal
 from unittest.mock import patch
+import json
 
 
 class WebhookTests(APITestCase):
@@ -198,44 +199,62 @@ class WebhookTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-# TODO: Figure out how to properly run tests for Celery tasks
+class WebhookCeleryTasksTests(SimpleTestCase):
+    """
+    Webhook Celery Tasks Tests
+    """
+    databases = '__all__'
 
-# class WebhookCeleryTasksTests(TransactionTestCase):
-#     """
-#     Webhook Celery Tasks Tests
-#     """
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.celery_worker = start_worker(app)
-#         cls.celery_worker.__enter__()    
-#     @classmethod
-#     def tearDownClass(cls):
-#         super().tearDownClass()
-#         cls.celery_worker.__exit__(None, None, None)
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.celery_worker = start_worker(app, perform_ping_check=False)
+        cls.celery_worker.__enter__()    
 
-#     def setUp(self):
-#         self.user1 = User.objects.create_user(
-#             username='testuser1', 
-#             password='12345',
-#         )
-#         user1_token = Token.objects.create(user=self.user1)
-#         self.user1_auth_header = 'Token ' + user1_token.key
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.celery_worker.__exit__(None, None, None)
 
-#         self.user1_webhook = Webhook.objects.create(
-#             url='https://example.com/0abb8ad2-48db-47bf-9eef-c653ee36ff32-test',
-#             comment='User 1 Webhook',
-#             owner=self.user1,
-#         )
+    def setUp(self):
+        self.user1 = User.objects.create_user(
+            username='testuser1', 
+            password='12345',
+        )
+        self.user1_webhook = Webhook.objects.create(
+            url='https://example.com/0abb8ad2-48db-47bf-9eef-c653ee36ff32-test',
+            comment='User 1 Webhook',
+            owner=self.user1,
+        )
 
+    @patch('webhooks.tasks.requests.post')
+    def test_webhooks_on_project_creation(self,mock):
+        """
+        Ensure we send webhooks with correct payload on Project creation 
+        """
+        mock.return_value.ok = True
 
-#     @patch('webhooks.tasks.send_post_request')
-#     def test_we_send_hooks_on_project_creation(self,mock):
-#         project = Project.objects.create(
-#             name='Project Two',
-#             description='Some basic description',
-#             url='https://github.com/fedorkosilov/literate-parakeet',
-#             rating=Decimal('4.99'),
-#             owner=self.user1,
-#         )
-#         self.assertEqual(mock.call_count, 1)
+        pjct_name = 'Project Two'
+        pjct_description = 'Some basic description'
+        pjct_url = 'https://github.com/fedorkosilov/literate-parakeet'
+        pjct_rating = Decimal('4.99')
+        
+        project = Project.objects.create(
+            name= pjct_name,
+            description= pjct_description,
+            url=pjct_url,
+            rating=pjct_rating,
+            owner=self.user1,
+        )
+
+        mock_call_args, mock_call_kwargs = mock.call_args_list[0]
+        webhook_payload = json.loads(mock_call_kwargs['data'])
+        self.assertEqual(mock.call_count, 1)
+        self.assertEqual(mock_call_kwargs['url'], self.user1_webhook.url)
+        self.assertEqual(webhook_payload['data']['type'], 'Project')
+        self.assertEqual(webhook_payload['data']['id'], project.id)
+        self.assertEqual(webhook_payload['data']['attributes']['name'], project.name)
+        self.assertEqual(webhook_payload['data']['attributes']['description'], project.description)
+        self.assertEqual(webhook_payload['data']['attributes']['url'], project.url)
+        self.assertEqual(webhook_payload['data']['attributes']['rating'], str(project.rating))
+        self.assertEqual(webhook_payload['data']['attributes']['owner'], project.owner.username)

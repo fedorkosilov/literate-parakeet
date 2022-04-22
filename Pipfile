@@ -10,6 +10,12 @@ celery = "*"
 redis = "*"
 psycopg2 = "*"
 requests = "*"
+mypy = "*"
+django-stubs = "*"
+types-requests = "*"
+typing = "==3.7.*"
+typing-extensions = "*"
+djangorestframework-stubs = "*"
 
 [dev-packages]
 
